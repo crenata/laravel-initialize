@@ -1,0 +1,43 @@
+#!/bin/sh
+while getopts p:n:d: flag
+do
+	case "${flag}" in
+		p) project=${OPTARG};;
+		n) name=${OPTARG};;
+		d) description=${OPTARG};;
+	esac
+done
+
+if [ -z "$project" ]; then
+	echo "Use -p for initialize project folder name";
+	exit 0;
+fi
+
+if ! [ -x "$(command -v composer)" ]; then
+	apt update
+	apt install composer
+fi
+
+if ! [ -x "$(command -v git)" ]; then
+	apt install git
+fi
+
+composer create-project laravel/laravel $project
+
+cd $project/
+
+rm -rf app/Models/User.php
+rm -rf database/migrations
+
+git clone https://github.com/crenata/laravel-starter-kit.git
+
+cp -rf laravel-starter-kit/. .
+rm -rf laravel-starter-kit
+rm -rf .git
+
+sed -i '5i use App\\Constants\\TokenConstant;' app/Http/Kernel.php
+sed -i 's+routeMiddleware = \[+routeMiddleware = \[\nTokenConstant::AUTH_ADMIN => \\App\\Http\\Middleware\\AdminMiddleware::class,\nTokenConstant::AUTH_USER => \\App\\Http\\Middleware\\UserMiddleware::class,+g' app/Http/Kernel.php
+
+if ! [ -z "$name" ]; then
+	sed -i "s+Laravel+$name+g" .env
+fi
