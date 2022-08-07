@@ -26,6 +26,8 @@ composer create-project laravel/laravel $project
 
 cd $project/
 
+composer require cboden/ratchet laravel-notification-channels/webpush
+
 rm -rf app/Models/User.php
 rm -rf database/migrations
 
@@ -37,6 +39,14 @@ rm -rf .git
 
 sed -i '5i use App\\Constants\\TokenConstant;' app/Http/Kernel.php
 sed -i 's+routeMiddleware = \[+routeMiddleware = \[\nTokenConstant::AUTH_ADMIN => \\App\\Http\\Middleware\\AdminMiddleware::class,\nTokenConstant::AUTH_USER => \\App\\Http\\Middleware\\UserMiddleware::class,+g' app/Http/Kernel.php
+
+echo "WEBSOCKET_PORT=8090" | tee -a .env .env.example > /dev/null
+echo "SERVER_CRT=\"/mnt/c/Xampp/apache/conf/ssl.crt/server.crt\"" | tee -a .env .env.example > /dev/null
+echo "SERVER_KEY=\"/mnt/c/Xampp/apache/conf/ssl.key/server.key\"" | tee -a .env .env.example > /dev/null
+echo "VAPID_PUBLIC_KEY=" | tee -a .env .env.example > /dev/null
+echo "VAPID_PRIVATE_KEY=" | tee -a .env .env.example > /dev/null
+
+php artisan webpush:vapid
 
 if ! [ -z "$name" ]; then
 	sed -i "s+Laravel+$name+g" .env
